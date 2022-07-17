@@ -120,3 +120,129 @@ app.listen(APP_PORT, () => {
 
 ```
 
+# 四、添加路由
+
+路由：根据不同的URL，调用对应处理函数
+
+## 1 安装koa-router
+
+```
+npm i koa-router
+```
+
+步骤：
+
+1. 导入包
+2. 实例化对象
+3. 编写路由
+4. 注册中间件
+
+## 2 编写路由
+
+创建`src/router`目录，编写`user.route.js`
+
+```js
+//导入koa-router
+const Router = require('koa-router');
+
+//实例化一个路由对象
+const router = new Router({ prefix: '/users' }); //使用统一的前缀
+
+//编写路由
+// GET /users/
+router.get('/', (ctx, next) => {
+  ctx.body = 'hello users';
+});
+
+//导出路由对象
+module.exports = router;
+```
+
+### 3 改写main.js
+
+```js
+const Koa = require('koa');
+
+const { APP_PORT } = require('./config/config.default');
+
+//导入编写好的router
+const userRouter = require('./router/user.route')
+
+const app = new Koa();
+
+//注册中间件
+app.use(userRouter.routes())
+
+app.listen(APP_PORT, () => {
+  console.log(`server is running on http://localhost:${APP_PORT}`);
+});
+
+```
+
+# 五、目录结构优化
+
+## 1 将http服务和app业务拆分
+
+创建`src/app/index.js`
+
+```js
+//引入koa框架
+const Koa = require('koa');
+
+//导入编写好的userRouter
+const userRouter = require('../router/user.route');
+
+//实例化koa对象
+const app = new Koa();
+
+//注册userRouter路由
+app.use(userRouter.routes());
+
+//导出app对象
+module.exports = app;
+```
+
+## 2 将路由和控制器拆分
+
+路由：解析URL，分发给控制器对应的方法
+
+控制器：处理不同的业务
+
+改写`src/router/user.route.js`
+
+```js
+//导入koa-router
+const Router = require('koa-router');
+
+//导入接口
+const { register,login } = require('../controller/user.controller');
+
+//实例化一个路由对象
+const router = new Router({ prefix: '/users' }); //url前缀
+
+//设置register接口路由
+router.post('/register', register);
+
+//设置login接口路由
+router.post('/login', login);
+
+//导出路由对象
+module.exports = router;
+```
+
+创建`src/controller/user.controller.js`
+
+```js
+//创建UserController类
+class UserController {
+  async register(ctx, next) {
+    ctx.body = '用户注册成功';
+  }
+  async login(ctx, next) {
+    ctx.body = '登录成功';
+  }
+}
+//导出UserController对象
+module.exports = new UserController();
+```
+

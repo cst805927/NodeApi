@@ -1,13 +1,7 @@
-const Koa = require('koa');
-
+//引入 APP_PORT
 const { APP_PORT } = require('./config/config.default');
-
-const app = new Koa();
-
-app.use((ctx, next) => {
-  ctx.body = 'hello api';
-});
-
+//导入app
+const app = require('./app')
 app.listen(APP_PORT, () => {
   console.log(`server is running on http://localhost:${APP_PORT}`);
 });
