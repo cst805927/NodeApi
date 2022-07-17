@@ -59,7 +59,7 @@ app.listen(3000, () => {
 安装nodemon工具
 
 ```
-npm i nodemon
+npm i nodemon -D
 ```
 
 编写`package.json`脚本
@@ -181,26 +181,40 @@ app.listen(APP_PORT, () => {
 
 # 五、目录结构优化
 
-## 1 将http服务和app业务拆分
+## 1 将`http`服务和`app`业务拆分
 
-创建`src/app/index.js`
+创建`src/app/index.js`负责`app`业务
 
 ```js
 //引入koa框架
 const Koa = require('koa');
 
-//导入编写好的userRouter
+//导入路由
 const userRouter = require('../router/user.route');
 
-//实例化koa对象
+//实例化对象
 const app = new Koa();
 
-//注册userRouter路由
+//注册路由
 app.use(userRouter.routes());
 
 //导出app对象
 module.exports = app;
 ```
+
+`src/main.js`负责`http`服务
+
+```js
+//引入 APP_PORT
+const { APP_PORT } = require('./config/config.default');
+//导入app
+const app = require('./app')
+app.listen(APP_PORT, () => {
+  console.log(`server is running on http://localhost:${APP_PORT}`);
+});
+```
+
+
 
 ## 2 将路由和控制器拆分
 
@@ -244,5 +258,44 @@ class UserController {
 }
 //导出UserController对象
 module.exports = new UserController();
+```
+
+# 六、解析body
+
+## 1 安装koa-body
+
+```
+npm init koa-body
+```
+
+## 2 注册中间件
+
+改写`app/index.js`
+
+![image-20220717190408439](ReadMe.assets/image-20220717190408439.png)
+
+## 3 解析请求数据
+
+改写`user.controller.js`
+
+![image-20220717192354533](ReadMe.assets/image-20220717192354533.png)
+
+## 4 拆分service层
+
+service层主要是做数据库处理
+
+创建`src/service/user.service.js`
+
+```js
+//创建UserServeice对象
+class UserService {
+  //创建user
+  async createUser(user_name, password) {
+    // todo: 写入数据库
+    return '写入数据库成功';
+  }
+}
+//导出UserService对象
+module.exports = new UserService();
 ```
 
