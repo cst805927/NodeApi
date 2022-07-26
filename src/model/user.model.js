@@ -28,4 +28,5 @@ const User = seq.define('cst_user', {
 //强制同步数据库(如果表已存在，则先删除)
 // User.sync({force: true});
 
+// 导出User模型
 module.exports = User

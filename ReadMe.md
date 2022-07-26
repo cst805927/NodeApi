@@ -352,3 +352,82 @@ seq
 `.env`文件
 
 ![image-20220717211630549](ReadMe.assets/image-20220717211630549.png)
+
+# 八、创建User模型
+
+## 1 拆分Model层
+
+sequelize主要通过Model对应数据表
+
+创建`src/model/user.model.js`
+
+```js
+//引入DataType数据类型
+const { DataTypes } = require('sequelize');
+//引入seq对象
+const seq = require('../db/seq');
+
+//创建模型(Model cst_user => cst_users)
+const User = seq.define('cst_user', {
+  //id会被requelize自动创建，管理
+  user_name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    comment: '用户名， 唯一',
+  },
+  password: {
+    type: DataTypes.CHAR(64),
+    allowNull: false,
+    comment: '密码',
+  },
+  is_admin: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: 0,
+    comment: '是否为管理员， 0:不是管理员(默认),1:是管理员',
+  },
+});
+
+//强制同步数据库(如果表已存在，则先删除)
+// User.sync({force: true});
+
+module.exports = User
+
+```
+
+# 九、添加用户入库
+
+改写`user.controller.js`
+
+```js
+//导入userService对象
+const { createUser } = require('../service/user.service.js');
+//创建UserController类
+class UserController {
+  //注册register
+  async register(ctx, next) {
+    //1.获取数据
+    const { user_name, password } = ctx.request.body;
+    //2.操作数据库
+    const res = await createUser(user_name, password);
+    //3.返回结果
+    ctx.body = {
+      code: 0,
+      message: '用户注册成功',
+      result: {
+        id: res.id,
+        user_name: res.user_name,
+      }
+    };
+  }
+  //登录login
+  async login(ctx, next) {
+    ctx.body = '登录成功';
+  }
+}
+//导出UserController对象
+module.exports = new UserController();
+
+```
+
