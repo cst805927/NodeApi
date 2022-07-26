@@ -299,3 +299,56 @@ class UserService {
 module.exports = new UserService();
 ```
 
+# 七、数据库操作
+
+sequelize ORM数据库工具
+
+ORM：对象关系映射
+
+- 数据表映射一个类
+- 数据表中的数据行映射一个对象
+- 数据表字段映射对象属性
+- 数据表的操作映射对象方法
+
+## 1 安装sequelize
+
+```
+npm i sequelize mysql2
+```
+
+## 2 连接数据库
+
+`sec/db/seq.js`
+
+```js
+//导入sequelize
+const { Sequelize } = require('sequelize');
+//导入数据库变量
+const {
+  MYSQL_HOST,
+  MYSQL_PORT,
+  MYSQL_USER,
+  MYSQL_PWD,
+  MYSQL_DB,
+} = require('../config/config.default');
+//实例化Sequelize对象
+const seq = new Sequelize(MYSQL_DB, MYSQL_USER, MYSQL_PWD, {
+  host: MYSQL_HOST,
+  dialect: 'mysql',
+});
+//检验连接是否成功
+seq
+  .authenticate()
+  .then(() => {
+    console.log('数据库连接成功');
+  })
+  .catch((err) => {
+    console.log('数据库连接失败 err === ', err);
+  });
+```
+
+## 3 编写配置文件
+
+`.env`文件
+
+![image-20220717211630549](ReadMe.assets/image-20220717211630549.png)
