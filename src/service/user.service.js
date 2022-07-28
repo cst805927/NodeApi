@@ -5,7 +5,6 @@ class UserService {
   // 插入 新用户
   async createUser(user_name, password) {
     const res = await User.create({ user_name, password });
-    console.log(res);
     return res.dataValues;
   }
   // 查询 用户
