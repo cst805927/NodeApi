@@ -490,3 +490,97 @@ module.exports = new UserController();
 
 # 十一、拆分中间件
 
+## 1. 拆分中间件
+
+创建`middle/user.middleware.js`
+
+```js
+const { getUserInfo } = require('../service/user.service');
+const {
+  userFormateError,
+  userAlreadyExited,
+  userRegiterError,
+} = require('../constant/err.type');
+
+const userValidator = async (ctx, next) => {
+  const { user_name, password } = ctx.request.body;
+  // 合法性
+  if (!user_name || !password) {
+    console.error('用户名或密码为空', ctx.request.body); // 错误日志
+    ctx.app.emit('error', userFormateError, ctx);
+    return;
+  }
+
+  await next();
+};
+
+const verifyUser = async (ctx, next) => {
+  const { user_name } = ctx.request.body;
+  try {
+    const res = await getUserInfo({ user_name });
+    if (res) {
+      console.error('用户名已经存在', user_name);
+      ctx.app.emit('error', userAlreadyExited, ctx);
+      return;
+    }
+  } catch (err) {
+    console.error('获取用户信息错误', err);
+    ctx.app.emit('error', userRegiterError, ctx);
+    return;
+  }
+  await next();
+};
+
+module.exports = { userValidator, verifyUser };
+
+```
+
+
+
+## 2. 统一错误处理
+
+改写`src/index.js`
+
+```js
+// 引入 错误处理 
+const errHandler = require('./errHandler')
+
+// 统一的错误处理
+app.on('error', errHandler);
+
+```
+
+
+
+## 3. 错误处理函数
+
+创建`src/errHandler.js`
+
+```js
+module.exports = (err, ctx) => {
+  let status = 500;
+  switch (err.code) {
+    case '10001':
+      status = 400
+      break
+    case '10002':
+      status = 409
+      break
+    default:
+      status = 500
+  }
+  ctx.status = status;
+  ctx.body = err;
+}
+```
+
+# 十二、加密
+
+在将密码保存到数据库之前，要对密码进行加密处理
+
+## 1 安装bcryptjs
+
+```
+npm i bcryptjs
+```
+

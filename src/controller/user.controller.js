@@ -21,11 +21,9 @@ class UserController {
         },
       };
     } catch (err) {
-      console.log(err)
+      console.error(err)
       ctx.app.emit('error', userRegiterError, ctx);
     }
-
-   
   }
   //登录login
   async login(ctx, next) {
