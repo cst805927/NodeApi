@@ -4,7 +4,8 @@ const { userRegiterError } = require('../constant/err.type');
 //创建UserController类
 class UserController {
   //注册register
-  async register(ctx, next) {
+  async register (ctx, next) {
+    console.log('register=========')
     //1.获取数据
     const { user_name, password } = ctx.request.body;
 
@@ -26,8 +27,9 @@ class UserController {
     }
   }
   //登录login
-  async login(ctx, next) {
-    ctx.body = '登录成功';
+  async login (ctx, next) {
+    const { user_name } = ctx.request.body;
+    ctx.body = `欢迎回来，${user_name}`;
   }
 }
 //导出UserController对象

@@ -584,3 +584,33 @@ module.exports = (err, ctx) => {
 npm i bcryptjs
 ```
 
+## 2 编写加密中间件
+
+```js
+/**
+ * 加密 密码
+ */
+const crpytPassword = async (ctx, next) => {
+  console.log('ctx======', ctx);
+  // 获取 明文 密码
+  const { password } = ctx.request.body;
+  // 生成 盐
+  const salt = bcrypt.genSaltSync(10);
+  // 加密
+  const hash = bcrypt.hashSync(password, salt);
+  ctx.request.body.password = hash;
+  await next();
+}
+```
+
+
+
+## 3 在 router 中使用
+
+```
+/**
+ * 设置register接口路由
+ */
+router.post('/register', userValidator, verifyUser, crpytPassword, register);
+```
+
