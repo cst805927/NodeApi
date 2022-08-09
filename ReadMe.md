@@ -614,3 +614,256 @@ const crpytPassword = async (ctx, next) => {
 router.post('/register', userValidator, verifyUser, crpytPassword, register);
 ```
 
+# 十三、验证登录
+
+`middleware/user.middleware.js`
+
+```
+/**
+ * 验证 登录
+ * @param {Object} ctx 前端传参
+ * @param {Function} next 下一步执行的函数
+ * @returns {Object} 登录错误
+ */
+const verifyLogin = async (ctx, next) => {
+  // 获取 前端 传参
+  const { user_name, password } = ctx.request.body;
+  try {
+    // 查找 数据库 用户
+    const res = await getUserInfo({ user_name });
+    // 1. 判断用户是否存在（不存在：报错）
+    if (!res) {
+      console.error('用户名不存在', { user_name });
+      ctx.app.emit('error', userDoesNotExists, ctx);
+      return;
+    }
+    // 2. 密码是否匹配（不匹配：报错）
+    if (!bcrypt.compareSync(password, res.password)) {
+      ctx.app.emit('error', invalidPassword, ctx);
+      return;
+    }
+  } catch (err) {
+    console.error(err);
+    return ctx.app.emit('error', userLoginError, ctx);
+  }
+  await next();
+}
+```
+
+`router/user.route.js`
+
+```
+/**
+ * 登录 接口
+ */
+router.post('/login', userValidator, verifyLogin, login);
+```
+
+
+
+# 十四、用户认证
+
+登录成功后，给用户颁发一个令牌token，用户在以后的每一次请求中携带这个令牌
+
+jwt: json web token
+
+- header: 头部
+- playload: 载荷
+- signature：签名
+
+## 1 安装jsonwebtoken
+
+```
+npm i jsonwebtoken
+```
+
+## 2 颁发token
+
+`controller/user.controller.js`
+
+```js
+/**
+   * 登录 操作
+   * @param {Object} ctx 
+   * @param {Function} next 
+   */
+  async login (ctx, next) {
+    const { user_name } = ctx.request.body;
+    // 1. 获取用户令牌
+    try {
+      // 从返回结果对象中剔除password属性，将剩下的属性放到res对象
+      const { password, ...res } = await getUserInfo({ user_name });
+      ctx.body = {
+        code: 0,
+        message: '用户登录成功',
+        result: {
+          token: jwt.sign(res, JWT_SECRET, {expiresIn: '1d'}),
+        },
+      };
+    } catch (err) {
+      console.error('用户登录失败', err);
+    }
+
+  }
+```
+
+## 3 定义私钥
+
+`.env` 
+
+```
+JWT_SECRET = xzd
+```
+
+
+
+## 4 token认证
+
+`middleware/auth.middleware.js`
+
+```js
+// 引入 jwt 对象
+const jwt = require('jsonwebtoken')
+// 引入 JWT配置
+const { JWT_SECRET } = require('../config/config.default')
+// 引入 错误类型
+const { tokenExpiredError, invalidToken } = require('../constant/err.type');
+/**
+ * token认证
+ * @param {Object} ctx 
+ * @param {Function} next 
+ * @returns 
+ */
+const auth = async (ctx, next) => {
+  // 获取 前端传入的 authorization
+  const { authorization} = ctx.request.header;
+  console.log('authorization ======', authorization);
+  // 获取 前端传入的 token
+  const token = authorization.replace('Bearer ', '');
+  try {
+    // 验证 token 是否合法
+    const user = jwt.verify(token, JWT_SECRET);
+    ctx.state.user = user;
+  } catch (err) { // token
+    switch (err.name) {
+      // token 已过期
+      case 'TokenExpiredError':
+        console.error('token已过期', err);
+        return ctx.app.emit('error', tokenExpiredError, ctx);
+      // 无效的 token
+      case 'JsonWebTokenError':
+        console.error('无效的token', err);
+        return ctx.app.emit('error', invalidToken, ctx);
+    }
+  }
+  await next();
+}
+module.exports = {
+  auth
+}
+```
+
+`router/user.router.js`
+
+```
+/**
+ * 修改密码接口
+ */
+router.patch('/', auth, (ctx, next) => {
+  console.log(ctx.state.user);
+  ctx.body = '修改密码成功';
+})
+```
+
+## 4 修改密码
+
+`service/user.service.js`
+
+```js
+ /**
+   * 修改 密码
+   * @param {Obect} param0 
+   */
+async updateById ({id, user_name, password, is_admin}) {
+    const whereOpt = { id };
+    const newUser = {}
+    user_name && Object.assign(newUser, {user_name})
+    password && Object.assign(newUser, {password})
+    is_admin && Object.assign(newUser, { is_admin })
+    const res = await User.update(newUser, { where: whereOpt })
+    return res[0] > 0 ? true : false;
+}
+```
+
+`controller/user,controller.js`
+
+```js
+/**
+   * 修改 密码
+   */
+async changePassword (ctx, next) {
+    // 1. 获取数据
+    const id = ctx.state.user.id;
+    const password = ctx.request.body.password;
+    // 2. 操作数据库
+    if (await updateById({ id, password })) {
+      ctx.body = {
+        code: 0,
+        message: '修改密码成功',
+        result: '',
+      }
+    } else {
+      ctx.body = {
+        code: '10007',
+        message: '修改密码失败',
+        result: '',
+      }
+    }
+    // 3. 返回结果
+}
+```
+
+`router/user.route.js`
+
+```js
+/**
+ * 修改密码接口
+ */
+router.patch('/', auth, crpytPassword, changePassword);
+```
+
+# 十五、路由自动加载
+
+新增`router/index.js`
+
+```js
+// 导入 fs 对象
+const fs = require('fs')
+// 导入 router 对象
+const Router = require('koa-router');
+// 创建 router 实例
+const router = new Router();
+// 读取 fs 文件名
+fs.readdirSync(__dirname).forEach(file => {
+  // 如果 文件名 不为 index.js
+  if (file !== 'index.js') {
+    // 动态生成 路由
+    let r = require('./' + file);
+    // 注册 路由
+    router.use(r.routes())
+  }
+})
+// 导出 路由
+module.exports = router
+```
+
+`app/index.js`
+
+```js
+// 导入 路由
+const router = require('../router')
+// 注册 中间件
+app.use(router.routes())
+```
+
+# 十六、封装管理员权限

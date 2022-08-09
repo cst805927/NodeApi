@@ -10,7 +10,9 @@ const {
   invalidPassword,
 } = require('../constant/err.type');
 /**
- * 检验 参数合法性
+ * 检验 前端 传参数 合法性
+ * @param {Object} ctx 前端传参
+ * @param {Function} next 下一步执行的函数
  */
 const userValidator = async (ctx, next) => {
   const { user_name, password } = ctx.request.body;
@@ -23,7 +25,9 @@ const userValidator = async (ctx, next) => {
   await next();
 };
 /**
- * 检验 用户是否存在
+ * 检验 用户 是否存在
+ * @param {Object} ctx 前端传参
+ * @param {Function} next 下一步执行的函数
  */
 const verifyUser = async (ctx, next) => {
   const { user_name } = ctx.request.body;
@@ -43,22 +47,25 @@ const verifyUser = async (ctx, next) => {
 };
 /**
  * 加密 密码
+ * @param {Object} ctx 前端传参
+ * @param {Function} next 下一步执行的函数
  */
 const crpytPassword = async (ctx, next) => {
-  // 获取 明文 密码
+  // 获取 前端传参 密码
   const { password } = ctx.request.body;
   // 生成 盐
   const salt = bcrypt.genSaltSync(10);
   // 加密
   const hash = bcrypt.hashSync(password, salt);
+  // 替换 密码
   ctx.request.body.password = hash;
   await next();
 }
 /**
- * 登录 验证
+ * 验证 登录
  * @param {Object} ctx 前端传参
  * @param {Function} next 下一步执行的函数
- * @returns 
+ * @returns {Object} 登录错误
  */
 const verifyLogin = async (ctx, next) => {
   // 获取 前端 传参

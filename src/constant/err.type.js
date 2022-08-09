@@ -12,21 +12,31 @@ module.exports = {
   userRegiterError: {
     code: '10003',
     message: '用户注册错误',
-    result: ''
+    result: '',
   },
   userDoesNotExists: {
-    code: '10004', 
+    code: '10004',
     message: '用户名不存在',
-    result: ''
+    result: '',
   },
   userLoginError: {
     code: '10005',
     message: '用户登录失败',
-    result: ''
+    result: '',
   },
   invalidPassword: {
     code: '10006',
     message: '密码不匹配',
-    result: ''
+    result: '',
+  },
+  tokenExpiredError: {
+    code: '10101',
+    message: 'token已过期',
+    result: '',
+  },
+  invalidToken: {
+    code: '10102',
+    message: '无效的token',
+    result: '',
   }
 };
