@@ -17,7 +17,9 @@
     "koa": "^2.13.4",
     "koa-body": "^5.0.0",
     "koa-router": "^11.0.1",
+    "koa-static": "^5.0.0",
     "mysql2": "^2.3.3",
+    "path": "^0.12.7",
     "sequelize": "^6.21.3"
   },
   "devDependencies": {

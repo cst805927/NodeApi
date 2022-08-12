@@ -1,6 +1,31 @@
+const path = require('path');
+const {
+  fileUploadError,
+  unSopportedFileType,
+} = require('../constant/err.type');
 class GoodsController {
-  async upload (ctx, next) {
-    ctx.body = '商品照片上传成功'
+  /**
+   * 上传 图片
+   * @param {Object} ctx
+   * @param {Function} next
+   */
+  async upload(ctx, next) {
+    const { file } = ctx.request.files;
+    const fileTypes = ['image/jpeg', 'image/png'];
+    if (file) {
+      if (!fileTypes.includes(file.type)) {
+        return ctx.app.emit('error', unSopportedFileType, ctx);
+      }
+      ctx.body = {
+        code: 0,
+        message: '商品图片上传成功',
+        result: {
+          goods_img: path.basename(file.filepath),
+        },
+      };
+    } else {
+      return ctx.app.emit('error', fileUploadError, ctx);
+    }
   }
 }
-module.exports = new GoodsController()
+module.exports = new GoodsController();

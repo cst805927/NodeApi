@@ -21,7 +21,6 @@ class UserController {
    * @param {Function} next
    */
   async register(ctx, next) {
-    console.log('register=========');
     //1.获取数据
     const { user_name, password } = ctx.request.body;
 
@@ -73,11 +72,12 @@ class UserController {
     const password = ctx.request.body.password;
     // 2. 操作数据库
     if (await updateById({ id, password })) {
+      // 3. 返回结果
       ctx.body = {
         code: 0,
         message: '修改密码成功',
         result: '',
-      }
+      };
     } else {
       ctx.body = {
         code: '10007',
@@ -85,7 +85,6 @@ class UserController {
         result: '',
       }
     }
-    // 3. 返回结果
   }
 }
 //导出UserController对象
