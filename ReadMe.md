@@ -901,7 +901,7 @@ router.post('/upload', auth, hadAdminPermission, upload);
 
 `controller/goods.controller.js`
 
-```
+```js
 /**
    * 上传 图片
    * @param {Object} ctx
@@ -929,7 +929,7 @@ router.post('/upload', auth, hadAdminPermission, upload);
 
 `router/goods.route.js`
 
-```
+```js
 const { upload } = require('../controller/goods.controller');
 router.post('/upload', auth, hadAdminPermission, upload);
 ```
@@ -938,7 +938,7 @@ router.post('/upload', auth, hadAdminPermission, upload);
 
 新增`middleware/goods.middleware.js`
 
-```
+```js
 const { goodsFormatError } = require('../constant/err.type')
 /**
  * 校验 商品参数格式
@@ -965,7 +965,7 @@ const validator = async (ctx, next) => {
 
 `constant/err.type.js`
 
-```
+```js
 goodsFormatError: {
     code: '10203',
     message: '商品参数格式错误',
@@ -975,7 +975,7 @@ goodsFormatError: {
 
 `router/goods.route.js`
 
-```
+```js
 const { validator } = require('../middleware/goods.middleware');
 // 发布商品 接口
 router.post('/', auth, hadAdminPermission, validator, (ctx) => {
@@ -985,4 +985,87 @@ router.post('/', auth, hadAdminPermission, validator, (ctx) => {
   };
 });
 ```
+
+# 十九、发布商品写入数据库
+
+新增`model/goods.model.js`
+
+```js
+const { DataTypes } = require('sequelize');
+const seq = require('../db/seq');
+// 商品
+const Goods = seq.define('cst_goods', {
+  goods_name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: '商品名称',
+  },
+  goods_price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    comment: '商品价格',
+  },
+  goods_num: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    comment: '商品库存',
+  },
+  goods_img: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: '商品图片的url',
+  },
+});
+
+// 强制创建表
+Goods.sync({ force: true });
+
+module.exports = Goods;
+
+```
+
+新建`service/goods.service.js`
+
+```js
+const Goods = require('../model/goods.model')
+// 商品相关service
+class GoodsService {
+  /**
+   * 创建 商品
+   * @param {Object} goods 
+   * @returns 
+   */
+  async createGoods (goods) {
+    const res = await Goods.create(goods)
+    return res.dataValues
+  }
+}
+module.exports = new GoodsService()
+```
+
+`controller/goods.controller.js`
+
+```js
+/**
+   * 发布 商品
+   * @param {Object} ctx 
+   */
+  async create (ctx) {
+    // 直接调用service的createGoods方法
+    try {
+      const {createdAt, updatedAt, ...res} = await createGoods(ctx.request.body);
+      ctx.body = {
+        code: 0,
+        message: '发布商品成功',
+        result: res,
+      }
+    } catch (err) {
+      console.error(err)
+      return ctx.app.emit('error', publishGoodsError, ctx)
+    }
+
+  }
+```
+
+
 

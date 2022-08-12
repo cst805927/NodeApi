@@ -6,6 +6,7 @@ const { validator } = require('../middleware/goods.middleware');
 const { upload, create } = require('../controller/goods.controller');
 
 const router = new Router({ prefix: '/goods' });
+
 // 商品图片上传 接口
 router.post('/upload', auth, hadAdminPermission, upload);
 

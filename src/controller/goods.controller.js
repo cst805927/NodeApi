@@ -37,7 +37,7 @@ class GoodsController {
   async create (ctx) {
     // 直接调用service的createGoods方法
     try {
-      const res = await createGoods(ctx.request.body);
+      const {createdAt, updatedAt, ...res} = await createGoods(ctx.request.body);
       ctx.body = {
         code: 0,
         message: '发布商品成功',
@@ -47,7 +47,6 @@ class GoodsController {
       console.error(err)
       return ctx.app.emit('error', publishGoodsError, ctx)
     }
-
   }
 }
 module.exports = new GoodsController();
