@@ -5,6 +5,7 @@ const Koa = require('koa');
 // 导入 koa-body
 const KoaBody = require('koa-body');
 const KoaStatic = require('koa-static')
+const parameter = require('koa-parameter');
 
 // 导入 错误处理
 const errHandler = require('./errHandler');
@@ -26,7 +27,7 @@ app.use(
   })
 );
 app.use(KoaStatic(path.join(__dirname, '../upload')))
-
+app.use(parameter(app))
 app.use(router.routes()).use(router.allowedMethods());
 
 // 统一 错误处理

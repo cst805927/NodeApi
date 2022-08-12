@@ -867,3 +867,122 @@ app.use(router.routes())
 ```
 
 # 十六、封装管理员权限
+
+`middleware/auth.middleware.js`
+
+```
+/**
+ * 验证 管理员权限
+ * @param {Object} ctx 
+ * @param {Function} next 
+ * @returns 
+ */
+const hadAdminPermission = async (ctx, next) => {
+  // 获取 当前用户 的 is_admin字段
+  const { is_admin } = ctx.state.user;
+  // 判断 当前用户 是否为管理员
+  if (!is_admin) {
+    console.error('该用户没有这个管理员的权限', ctx.state.user)
+    return ctx.app.emit('error', hasNotAdminPermission, ctx)
+  }
+  await next();
+}
+```
+
+`router/goods.route.js`
+
+```
+const { auth, hadAdminPermission } = require('../middleware/auth.middleware')
+router.post('/upload', auth, hadAdminPermission, upload);
+
+```
+
+# 十七、商品图片上传
+
+`controller/goods.controller.js`
+
+```
+/**
+   * 上传 图片
+   * @param {Object} ctx
+   * @param {Function} next
+   */
+  async upload(ctx, next) {
+    const { file } = ctx.request.files;
+    const fileTypes = ['image/jpeg', 'image/png'];
+    if (file) {
+      if (!fileTypes.includes(file.type)) {
+        return ctx.app.emit('error', unSopportedFileType, ctx);
+      }
+      ctx.body = {
+        code: 0,
+        message: '商品图片上传成功',
+        result: {
+          goods_img: path.basename(file.filepath),
+        },
+      };
+    } else {
+      return ctx.app.emit('error', fileUploadError, ctx);
+    }
+  }
+```
+
+`router/goods.route.js`
+
+```
+const { upload } = require('../controller/goods.controller');
+router.post('/upload', auth, hadAdminPermission, upload);
+```
+
+# 十八、集成统一的参数格式校验
+
+新增`middleware/goods.middleware.js`
+
+```
+const { goodsFormatError } = require('../constant/err.type')
+/**
+ * 校验 商品参数格式
+ * @param {Object} ctx 
+ * @param {Function} next 
+ * @returns 
+ */
+const validator = async (ctx, next) => {
+  try {
+    ctx.verifyParams({
+      goods_name: {type: 'string', required: true},
+      goods_price: { type: 'number', require: true },
+      goods_num: { type: 'number', required: true },
+      goods_img: { type: 'string', required: true },
+    })
+  } catch (err) {
+    console.error(err)
+    goodsFormatError.result = err;
+    return ctx.app.emit('error', goodsFormatError, ctx);
+  }
+  await next();
+}
+```
+
+`constant/err.type.js`
+
+```
+goodsFormatError: {
+    code: '10203',
+    message: '商品参数格式错误',
+    result: '',
+  }
+```
+
+`router/goods.route.js`
+
+```
+const { validator } = require('../middleware/goods.middleware');
+// 发布商品 接口
+router.post('/', auth, hadAdminPermission, validator, (ctx) => {
+  ctx.body = {
+    code: '',
+    message: '发布商品成功',
+  };
+});
+```
+

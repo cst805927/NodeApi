@@ -48,6 +48,7 @@ class UserService {
     const res = await User.update(newUser, { where: whereOpt })
     return res[0] > 0 ? true : false;
   }
+  
 }
 //导出UserService对象
 module.exports = new UserService();
