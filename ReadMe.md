@@ -1067,5 +1067,64 @@ module.exports = new GoodsService()
   }
 ```
 
+# 二十、修改商品接口
+
+`router/goods.route.js`
+
+```js
+const { upload, create, update } = require('../controller/goods.controller');
+// 修改商品 接口
+router.put('/:id', auth, hadAdminPermission, validator, update);
+```
+
+`controller/goods.controller.js`
+
+```js
+/**
+   * 修改 商品
+   */
+  async update (ctx) {
+    try {
+      const res = await updateGoods(ctx.params.id, ctx.request.body);
+      if (res) {
+        ctx.body = {
+          code: 0,
+          message: '修改商品成功',
+          result: ''
+        }
+      } else {
+        return ctx.app.emit('error', invalidGoodsID, ctx);
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+```
+
+`service/goods.service.js`
+
+```js
+/**
+   * 修改 商品
+   * @param {String} id 
+   * @param {Object} goods 
+   * @returns 
+   */
+  async updateGoods (id, goods) {
+    const res = await Goods.update(goods, { where: { id } });
+    return res[0] > 0 ? true: false
+  }
+```
+
+`constant/err.type.js`
+
+```js
+invalidGoodsID: {
+    code: '10205',
+    message: '待修改的商品不存在',
+    result: '',
+  }
+```
+
 
 
