@@ -1126,5 +1126,57 @@ invalidGoodsID: {
   }
 ```
 
+# 二十、删除商品接口
+
+## 1 硬删除接口
+
+`router/goods.route.js`
+
+```js
+const {
+  upload,
+  create,
+  update,
+  remove,
+} = require('../controller/goods.controller');
+// 删除商品 接口
+router.delete('/:id', auth, hadAdminPermission, remove);
+```
+
+`controller/goods.controller.js`
+
+```js
+const {
+  createGoods,
+  updateGoods,
+  removeGoods,
+} = require('../service/goods.service');
+/**
+   * 删除 商品
+   * @param {Object} ctx
+   */
+  async remove(ctx) {
+    await removeGoods(ctx.params.id);
+    ctx.body = {
+      code: 0,
+      message: '删除商品成功',
+      result: ''
+    }
+}  
+```
+
+`service/goods.service.js`
+
+```js
+/**
+   * 删除 商品
+   * @param {String} id
+   */
+  async removeGoods (id) {
+    const res = await Goods.destroy({ where: { id } });
+    return res[0] > 0 ? true : false;
+  }
+```
+
 
 
