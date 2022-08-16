@@ -24,9 +24,17 @@ class GoodsService {
    * 删除 商品
    * @param {String} id
    */
-  async removeGoods (id) {
+  async removeGoods(id) {
     const res = await Goods.destroy({ where: { id } });
-    return res[0] > 0 ? true : false;
+    return res > 0 ? true : false;
+  }
+  /**
+   * 上架 商品
+   * @param {Stirng} id
+   */
+  async restoreGoods(id) {
+    const res = await Goods.restore({ where: { id } });
+    return res > 0 ? true : false;
   }
 }
 module.exports = new GoodsService();

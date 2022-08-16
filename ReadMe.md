@@ -1126,9 +1126,7 @@ invalidGoodsID: {
   }
 ```
 
-# 二十、删除商品接口
-
-## 1 硬删除接口
+# 二十一、硬删除商品接口
 
 `router/goods.route.js`
 
@@ -1175,6 +1173,141 @@ const {
   async removeGoods (id) {
     const res = await Goods.destroy({ where: { id } });
     return res[0] > 0 ? true : false;
+  }
+```
+
+# 二十二、上下架商品接口
+
+## 1 Paranoid - 偏执表
+
+`model/goods.model.js`
+
+```js
+ {
+    paranoid: true,
+  }
+```
+
+
+
+## 2 下架商品接口
+
+`router/goods.route.js`
+
+```js
+const {
+  upload,
+  create,
+  update,
+  remove,
+  restore,
+} = require('../controller/goods.controller');
+// 下架商品 接口
+router.post('/:id/off', auth, hadAdminPermission, remove);
+```
+
+`controller/goods.controller.js`
+
+```js
+const {
+  createGoods,
+  updateGoods,
+  removeGoods,
+  restoreGoods,
+} = require('../service/goods.service');
+/**
+   * 删除 商品
+   * @param {Object} ctx
+   */
+  async remove(ctx) {
+    const res = await removeGoods(ctx.params.id);
+    try {
+      if (res) {
+        ctx.body = {
+          code: 0,
+          message: '下架商品成功',
+          result: '',
+        };
+      } else {
+        return ctx.app.emit('error', invalidGoodsID, ctx);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+```
+
+`service/goods.service.js`
+
+```
+/**
+   * 删除 商品
+   * @param {String} id
+   */
+  async removeGoods(id) {
+    const res = await Goods.destroy({ where: { id } });
+    return res > 0 ? true : false;
+  }
+```
+
+## 3 上架商品接口
+
+`router/goods.route.js`
+
+```js
+const {
+  upload,
+  create,
+  update,
+  remove,
+  restore,
+} = require('../controller/goods.controller');
+
+// 上架商品 接口
+router.post('/:id/on', auth, hadAdminPermission, restore)
+```
+
+`controller/goods.controller.js`
+
+```js
+const {
+  createGoods,
+  updateGoods,
+  removeGoods,
+  restoreGoods,
+} = require('../service/goods.service');
+/**
+   * 上架 商品
+   * @param {*} ctx
+   */
+  async restore(ctx) {
+    const res = await restoreGoods(ctx.params.id);
+    try {
+      if (res) {
+        ctx.body = {
+          code: 0,
+          message: '上架商品成功',
+          result: '',
+        };
+      } else {
+        ctx.app.emit('error', invalidGoodsID, ctx);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+```
+
+`service/goods.service.js`
+
+```js
+/**
+   * 上架 商品
+   * @param {Stirng} id
+   */
+  async restoreGoods(id) {
+    const res = await Goods.restore({ where: { id } });
+    return res > 0 ? true : false;
   }
 ```
 
