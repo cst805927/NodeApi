@@ -1388,5 +1388,163 @@ router.get('/', findAll);
   }
 ```
 
+# 二十四、添加到购物车
 
+新增 `router/cart.route.js`
+
+```js
+// 1. 导入 koa-router
+const Router = require('koa-router');
+
+// 中间件
+const { auth } = require('../middleware/auth.middleware');
+const { validator } = require('../middleware/cart.middleware')
+
+// 控制器
+const { add } = require('../controller/cart.controller')
+// 2. 实例化 router对象
+const router = new Router({ prefix: '/carts' });
+
+// 3. 编写 路由规则
+
+// 3.1 添加到购物车 接口: 登录, 格式
+router.post('/', auth, validator, add);
+
+// 4. 导出 router对象
+module.exports = router;
+
+```
+
+新增 `middleware/cart.middleware.js`
+
+```js
+const { invalidGoodsID } = require('../constant/err.type');
+/**
+ * 校验 参数
+ * @param {*} ctx
+ * @param {*} next
+ * @returns
+ */
+const validator = async (ctx, next) => {
+  try {
+    ctx.verifyParams({
+      goods_id: 'number',
+    });
+  } catch (err) {
+    console.error(err);
+    return ctx.app.emit('error', invalidGoodsID, ctx);
+  }
+  await next();
+};
+module.exports = { validator };
+
+```
+
+新增 `controller/cart.controller.js`
+
+```js
+const { createOrUpdate } = require('../service/cart.service');
+class CartController {
+  /**
+   * 将商品添加到购物车
+   * @param {*} ctx
+   */
+  async add(ctx) {
+    // 将商品添加到购物车
+    // 1. 解析 user_id
+    const user_id = ctx.state.user.id;
+    const goods_id = ctx.request.body.goods_id;
+    console.log(user_id, goods_id);
+    // 2. 操作数据库
+    const res = await createOrUpdate(user_id, goods_id);
+    // 3. 返回结果
+    if (res) {
+      ctx.body = {
+        code: 0,
+        message: '添加到购物车成功',
+        result: res,
+      };
+    }
+  }
+}
+
+module.exports = new CartController();
+
+```
+
+新增 `service/cart.service.js`
+
+```js
+const { Op } = require('sequelize');
+const Cart = require('../model/cart.model'); 
+/**
+   * 添加商品到数据库
+   * @param {*} user_id
+   * @param {*} goods_id
+   */
+  async createOrUpdate(user_id, goods_id) {
+    try {
+      // 根据 user_id 和 goods_id 同时查找，有没有记录
+      let res = await Cart.findOne({
+        where: {
+          [Op.and]: {
+            user_id,
+            goods_id,
+          },
+        },
+      });
+      if (res) {
+        // 已经存在一条记录，将 number + 1
+        await res.increment('number');
+        return await res.reload();
+      } else {
+        return Cart.create({
+          user_id,
+          goods_id,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+```
+
+新增 `model/cart.model.js`
+
+```js
+// 1. 导入 sequelize
+const { DataTypes } = require('sequelize');
+const seq = require('../db/seq');
+// 2. 定义 模型
+const Cart = seq.define('cst_carts', {
+  goods_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    comment: '商品的id',
+  },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    comment: '用户的id',
+  },
+  number: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+    comment: '商品的数量',
+  },
+  selected: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    comment: '是否选中',
+  },
+});
+// 3. 同步 数据库
+// Cart.sync({ force: true });
+
+// 4. 导出 模型
+module.exports = Cart;
+
+```
 
